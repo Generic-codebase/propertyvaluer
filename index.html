@@ -481,7 +481,7 @@
             </div>
 
             <div class="info-box">
-                <strong>Note:</strong> This tool provides estimates based on average market data. For accurate valuations, consult a registered valuer or real estate professional.
+                <strong>Enhanced Estimation:</strong> This tool now includes suburb-specific pricing data, ownership type adjustments, and property feature valuations for more accurate estimates. Results are based on market data and should be verified with a registered valuer or real estate professional.
             </div>
 
             <form id="propertyForm" class="form-grid">
@@ -512,6 +512,25 @@
                         <option value="townhouse">Townhouse</option>
                         <option value="apartment">Apartment/Unit</option>
                         <option value="lifestyle">Lifestyle Block</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ownership Type</label>
+                    <select id="ownershipType" class="form-select" required>
+                        <option value="">Select Ownership</option>
+                        <option value="freehold">Freehold</option>
+                        <option value="crosslease">Cross Lease</option>
+                        <option value="leasehold">Leasehold</option>
+                        <option value="unit-title">Unit Title</option>
+                        <option value="company-share">Company Share</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Suburb</label>
+                    <select id="suburb" class="form-select" required>
+                        <option value="">Select Region First</option>
                     </select>
                 </div>
 
@@ -550,6 +569,44 @@
                         <option value="average">Average - Some wear and tear</option>
                         <option value="poor">Poor - Needs renovation</option>
                     </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Property Features (select all that apply)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureGarage" class="property-feature" value="garage">
+                            <span>Garage</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureCarport" class="property-feature" value="carport">
+                            <span>Carport</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureSolar" class="property-feature" value="solar">
+                            <span>Solar System</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureHeatPump" class="property-feature" value="heatpump">
+                            <span>Heat Pump</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featurePool" class="property-feature" value="pool">
+                            <span>Swimming Pool</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureAirCon" class="property-feature" value="aircon">
+                            <span>Air Conditioning</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureAlarm" class="property-feature" value="alarm">
+                            <span>Alarm System</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+                            <input type="checkbox" id="featureDeck" class="property-feature" value="deck">
+                            <span>Deck/Patio</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group full-width">
@@ -932,6 +989,118 @@
         'other': 0.60
     };
 
+    // Suburb data with pricing multipliers relative to region average
+    const suburbData = {
+        'auckland': {
+            'remuera': 1.45, 'herne-bay': 1.50, 'parnell': 1.40, 'mission-bay': 1.35,
+            'ponsonby': 1.30, 'grey-lynn': 1.25, 'mt-eden': 1.28, 'epsom': 1.32,
+            'devonport': 1.22, 'takapuna': 1.20, 'milford': 1.18, 'browns-bay': 1.05,
+            'albany': 1.08, 'mt-albert': 1.10, 'western-springs': 1.15, 'pt-chevalier': 1.12,
+            'sandringham': 1.00, 'mt-roskill': 0.95, 'avondale': 0.92, 'new-lynn': 0.90,
+            'glen-eden': 0.85, 'henderson': 0.88, 'massey': 0.82, 'west-harbour': 0.87,
+            'howick': 1.08, 'bucklands-beach': 1.10, 'half-moon-bay': 1.12, 'botany': 0.98,
+            'pakuranga': 1.02, 'highland-park': 0.96, 'glendowie': 1.20, 'st-heliers': 1.38,
+            'onehunga': 0.98, 'royal-oak': 1.02, 'greenlane': 1.05, 'ellerslie': 1.03,
+            'panmure': 0.92, 'glen-innes': 0.88, 'point-england': 0.85, 'mt-wellington': 0.90,
+            'mangere': 0.75, 'otara': 0.70, 'papatoetoe': 0.80, 'manurewa': 0.72,
+            'papakura': 0.78, 'pukekohe': 0.82, 'waiuku': 0.75, 'drury': 0.80,
+            'orewa': 0.95, 'whangaparaoa': 0.98, 'silverdale': 1.00, 'red-beach': 0.96
+        },
+        'wellington': {
+            'oriental-bay': 1.40, 'roseneath': 1.35, 'seatoun': 1.30, 'island-bay': 1.15,
+            'mt-victoria': 1.25, 'kelburn': 1.28, 'wadestown': 1.22, 'thorndon': 1.32,
+            'karori': 1.10, 'northland': 1.15, 'khandallah': 1.20, 'ngaio': 1.12,
+            'brooklyn': 1.08, 'kingston': 1.05, 'miramar': 1.10, 'lyall-bay': 1.12,
+            'newtown': 1.00, 'mt-cook': 0.98, 'kilbirnie': 1.02, 'hataitai': 1.18,
+            'johnsonville': 0.95, 'tawa': 0.90, 'porirua': 0.85, 'titahi-bay': 0.82,
+            'lower-hutt': 0.88, 'upper-hutt': 0.85, 'petone': 0.92, 'eastbourne': 1.15,
+            'kapiti-coast': 0.80, 'paraparaumu': 0.82, 'waikanae': 0.85, 'raumati': 0.83
+        },
+        'christchurch': {
+            'fendalton': 1.35, 'merivale': 1.40, 'cashmere': 1.30, 'westmorland': 1.32,
+            'sumner': 1.28, 'redcliffs': 1.25, 'ferrymead': 1.15, 'mt-pleasant': 1.20,
+            'st-albans': 1.10, 'papanui': 1.08, 'burnside': 1.12, 'bryndwr': 1.05,
+            'riccarton': 1.00, 'upper-riccarton': 1.05, 'ilam': 1.02, 'sockburn': 0.92,
+            'hornby': 0.88, 'halswell': 0.95, 'templeton': 0.85, 'prebbleton': 0.90,
+            'new-brighton': 0.85, 'aranui': 0.75, 'wainoni': 0.78, 'bromley': 0.80,
+            'linwood': 0.88, 'woolston': 0.90, 'opawa': 1.00, 'somerfield': 1.05,
+            'lyttelton': 1.10, 'diamond-harbour': 1.08, 'rolleston': 0.92, 'lincoln': 0.88
+        },
+        'hamilton': {
+            'hamilton-east': 1.15, 'riverlea': 1.20, 'fitzroy': 1.10, 'claudelands': 1.18,
+            'hillcrest': 1.12, 'chartwell': 1.08, 'rototuna': 1.05, 'flagstaff': 1.10,
+            'dinsdale': 0.95, 'frankton': 1.00, 'hamilton-central': 0.98, 'western-heights': 0.92,
+            'melville': 1.05, 'beerescourt': 0.88, 'fairfield': 1.02, 'enderley': 0.90,
+            'huntington': 0.95, 'nawton': 0.92, 'forest-lake': 1.00, 'te-rapa': 0.85,
+            'cambridge': 1.15, 'te-awamutu': 0.90, 'morrinsville': 0.85, 'matamata': 0.88
+        },
+        'tauranga': {
+            'mt-maunganui': 1.25, 'papamoa': 1.15, 'bethlehem': 1.20, 'matua': 1.22,
+            'otumoetai': 1.18, 'brookfield': 1.12, 'tauranga-central': 1.10, 'greerton': 1.00,
+            'gate-pa': 1.05, 'merivale': 1.08, 'pyes-pa': 1.02, 'welcome-bay': 0.98,
+            'te-puke': 0.85, 'katikati': 0.88, 'waihi-beach': 1.10, 'ohope': 1.05
+        },
+        'dunedin': {
+            'roslyn': 1.20, 'maori-hill': 1.22, 'belleknowes': 1.15, 'wakari': 1.10,
+            'helensburgh': 1.12, 'andersons-bay': 1.18, 'st-clair': 1.25, 'st-kilda': 1.15,
+            'dunedin-central': 1.05, 'north-dunedin': 1.08, 'mornington': 1.10, 'kaikorai': 1.00,
+            'brockville': 1.05, 'green-island': 0.92, 'mosgiel': 0.88, 'brighton': 0.95,
+            'portobello': 1.12, 'warrington': 0.85, 'waikouaiti': 0.80, 'waitati': 0.85
+        },
+        'palmerston-north': {
+            'hokowhitu': 1.15, 'takaro': 1.08, 'roslyn': 1.12, 'awapuni': 1.05,
+            'palmerston-north-central': 1.00, 'terrace-end': 1.02, 'kelvin-grove': 0.98, 'milson': 1.05,
+            'fitzherbert': 0.95, 'cloverlea': 0.92, 'highbury': 0.95, 'west-end': 0.90,
+            'ashhurst': 0.85, 'feilding': 0.88, 'shannon': 0.80, 'foxton': 0.78
+        },
+        'napier-hastings': {
+            'napier-hill': 1.20, 'bluff-hill': 1.25, 'hospital-hill': 1.15, 'ahuriri': 1.22,
+            'westshore': 1.18, 'taradale': 1.10, 'greenmeadows': 1.08, 'napier-south': 1.00,
+            'marewa': 0.98, 'onekawa': 0.95, 'maraenui': 0.85, 'tamatea': 0.92,
+            'havelock-north': 1.15, 'hastings-central': 1.00, 'flaxmere': 0.80, 'camberley': 0.95
+        },
+        'nelson': {
+            'nelson-central': 1.10, 'the-wood': 1.20, 'tahunanui': 1.15, 'washington-valley': 1.18,
+            'stoke': 1.05, 'monaco': 1.08, 'richmond': 1.00, 'hope': 0.95,
+            'brightwater': 0.92, 'wakefield': 0.88, 'motueka': 0.90, 'mapua': 1.05
+        },
+        'rotorua': {
+            'rotorua-central': 1.00, 'western-heights': 0.95, 'lynmore': 1.15, 'ngongotaha': 1.08,
+            'sunnybrook': 1.10, 'owhata': 0.90, 'fordlands': 0.80, 'koutu': 0.88,
+            'victoria': 0.92, 'Springfield': 1.05, 'hamurana': 1.12, 'lake-okareka': 1.20
+        },
+        'queenstown': {
+            'queenstown-hill': 1.30, 'fernhill': 1.25, 'sunshine-bay': 1.35, 'kelvin-heights': 1.40,
+            'queenstown-central': 1.20, 'frankton': 1.10, 'arrowtown': 1.28, 'jacks-point': 1.45,
+            'lake-hayes': 1.38, 'shotover-country': 1.22, 'wanaka': 1.25, 'albert-town': 1.15,
+            'cromwell': 0.85, 'alexandra': 0.80, 'clyde': 0.88, 'glenorchy': 0.90
+        },
+        'other': {
+            'default': 1.00
+        }
+    };
+
+    // Ownership type multipliers
+    const ownershipMultipliers = {
+        'freehold': 1.00,
+        'crosslease': 0.92,
+        'leasehold': 0.70,
+        'unit-title': 0.95,
+        'company-share': 0.88
+    };
+
+    // Feature value additions (in dollars)
+    const featureValues = {
+        'garage': 15000,
+        'carport': 8000,
+        'solar': 12000,
+        'heatpump': 5000,
+        'pool': 25000,
+        'aircon': 8000,
+        'alarm': 3000,
+        'deck': 10000
+    };
+
     // Property type base values (Auckland house as baseline)
     const propertyTypeValues = {
         'house': 950000,
@@ -1022,8 +1191,39 @@
         }
     }
 
+    // Populate suburbs based on selected region
+    function populateSuburbs(region) {
+        const suburbSelect = document.getElementById('suburb');
+        suburbSelect.innerHTML = '<option value="">Select Suburb</option>';
+
+        if (!region || !suburbData[region]) {
+            suburbSelect.innerHTML = '<option value="">Select Region First</option>';
+            return;
+        }
+
+        const suburbs = suburbData[region];
+        const suburbOptions = Object.keys(suburbs).map(key => {
+            const displayName = key.split('-').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            return { value: key, name: displayName };
+        }).sort((a, b) => a.name.localeCompare(b.name));
+
+        suburbOptions.forEach(suburb => {
+            const option = document.createElement('option');
+            option.value = suburb.value;
+            option.textContent = suburb.name;
+            suburbSelect.appendChild(option);
+        });
+    }
+
     // Event Listeners
     function setupEventListeners() {
+        // Region change - populate suburbs
+        document.getElementById('region').addEventListener('change', function() {
+            populateSuburbs(this.value);
+        });
+
         // Property form submission
         document.getElementById('propertyForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1078,7 +1278,9 @@
     // Property Value Calculation
     function calculatePropertyValue() {
         const region = document.getElementById('region').value;
+        const suburb = document.getElementById('suburb').value;
         const propertyType = document.getElementById('propertyType').value;
+        const ownershipType = document.getElementById('ownershipType').value;
         const bedrooms = parseInt(document.getElementById('bedrooms').value);
         const bathrooms = parseFloat(document.getElementById('bathrooms').value);
         const floorArea = parseInt(document.getElementById('floorArea').value);
@@ -1086,16 +1288,29 @@
         const propertyAge = parseInt(document.getElementById('propertyAge').value);
         const condition = document.getElementById('condition').value;
 
-        if (!region || !propertyType || !bedrooms || !bathrooms || !floorArea || !condition) {
+        if (!region || !suburb || !propertyType || !ownershipType || !bedrooms || !bathrooms || !floorArea || !condition) {
             alert('Please fill in all required fields');
             return;
         }
+
+        // Get selected features
+        const selectedFeatures = [];
+        document.querySelectorAll('.property-feature:checked').forEach(feature => {
+            selectedFeatures.push(feature.value);
+        });
 
         // Base value from property type
         let baseValue = propertyTypeValues[propertyType];
 
         // Apply region multiplier
         baseValue *= regionMultipliers[region];
+
+        // Apply suburb multiplier for more accurate pricing
+        const suburbMultiplier = suburbData[region]?.[suburb] || 1.0;
+        baseValue *= suburbMultiplier;
+
+        // Apply ownership type multiplier
+        baseValue *= ownershipMultipliers[ownershipType];
 
         // Adjust for bedrooms (each bedroom adds ~8%)
         const bedroomAdjustment = Math.pow(1.08, bedrooms - 3);
@@ -1133,6 +1348,15 @@
         };
         baseValue *= conditionMultipliers[condition];
 
+        // Add value for property features
+        let featureValueAdd = 0;
+        selectedFeatures.forEach(feature => {
+            if (featureValues[feature]) {
+                featureValueAdd += featureValues[feature];
+            }
+        });
+        baseValue += featureValueAdd;
+
         // Ensure minimum value
         baseValue = Math.max(baseValue, 100000);
 
@@ -1142,8 +1366,8 @@
 
         // Store current property data
         currentPropertyData = {
-            region, propertyType, bedrooms, bathrooms, floorArea, landSize, propertyAge, condition,
-            estimatedValue, lowerRange, upperRange
+            region, suburb, propertyType, ownershipType, bedrooms, bathrooms, floorArea, landSize,
+            propertyAge, condition, features: selectedFeatures, estimatedValue, lowerRange, upperRange
         };
 
         // Display results
@@ -1294,13 +1518,34 @@
         // Load property data
         if (project.propertyData) {
             document.getElementById('region').value = project.propertyData.region;
+
+            // Populate suburbs for the region, then set suburb
+            populateSuburbs(project.propertyData.region);
+            setTimeout(() => {
+                document.getElementById('suburb').value = project.propertyData.suburb || '';
+            }, 100);
+
             document.getElementById('propertyType').value = project.propertyData.propertyType;
+            document.getElementById('ownershipType').value = project.propertyData.ownershipType || 'freehold';
             document.getElementById('bedrooms').value = project.propertyData.bedrooms;
             document.getElementById('bathrooms').value = project.propertyData.bathrooms;
             document.getElementById('floorArea').value = project.propertyData.floorArea;
             document.getElementById('landSize').value = project.propertyData.landSize;
             document.getElementById('propertyAge').value = project.propertyData.propertyAge;
             document.getElementById('condition').value = project.propertyData.condition;
+
+            // Restore selected features
+            document.querySelectorAll('.property-feature').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            if (project.propertyData.features && Array.isArray(project.propertyData.features)) {
+                project.propertyData.features.forEach(feature => {
+                    const checkbox = document.querySelector(`.property-feature[value="${feature}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
 
             currentPropertyData = project.propertyData;
             displayPropertyResults(
