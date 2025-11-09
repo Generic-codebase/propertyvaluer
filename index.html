@@ -6,6 +6,7 @@
     <title>NZ Property Value Estimator</title>
     <meta name="description" content="Estimate property values and renovation potential in the New Zealand real estate market">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -445,6 +446,32 @@
 
     .fade-in {
         animation: fadeIn 0.3s ease-in;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 2rem 0;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .investment-section {
+        background: #f0f9ff;
+        border: 2px solid #bae6fd;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .metric-highlight {
+        background: linear-gradient(135deg, #10b98120 0%, #05966920 100%);
+        border: 2px solid #10b981;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
     }
 </style>
 
@@ -927,6 +954,64 @@
                     </div>
                 </div>
 
+                <div class="investment-section">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937;">Investment Analysis</h3>
+
+                    <div class="form-grid" style="margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Total Borrowing ($)</label>
+                            <input type="number" id="totalBorrowing" class="form-input" placeholder="0" value="0" min="0">
+                            <span class="region-note">Amount to finance renovations</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Interest Rate (%)</label>
+                            <input type="number" id="interestRate" class="form-input" placeholder="6.8" value="6.8" min="0" max="20" step="0.1">
+                            <span class="region-note">Annual interest rate</span>
+                        </div>
+                    </div>
+
+                    <button id="calculateInvestment" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Calculate Investment Returns</button>
+
+                    <div id="investmentResults" class="hidden">
+                        <div class="results-grid">
+                            <div class="result-box metric-highlight">
+                                <div class="result-label">10-Year ROI</div>
+                                <div class="result-value" id="roi10Year" style="color: #059669;">0%</div>
+                                <div class="result-subtext">Total return over 10 years</div>
+                            </div>
+
+                            <div class="result-box metric-highlight">
+                                <div class="result-label">Break-Even Time</div>
+                                <div class="result-value" id="breakEvenYears" style="color: #059669;">0 years</div>
+                                <div class="result-subtext">Time to recover investment</div>
+                            </div>
+
+                            <div class="result-box">
+                                <div class="result-label">Total Interest Paid</div>
+                                <div class="result-value" id="totalInterestPaid" style="color: #ef4444;">$0</div>
+                                <div class="result-subtext">Over loan term</div>
+                            </div>
+
+                            <div class="result-box">
+                                <div class="result-label">Net Profit (10 Years)</div>
+                                <div class="result-value" id="netProfit10Year">$0</div>
+                                <div class="result-subtext">After all costs</div>
+                            </div>
+                        </div>
+
+                        <h4 style="font-weight: 600; margin: 2rem 0 1rem; color: #1f2937;">10-Year Projection</h4>
+                        <div class="chart-container">
+                            <canvas id="chart10Year"></canvas>
+                        </div>
+
+                        <h4 style="font-weight: 600; margin: 2rem 0 1rem; color: #1f2937;">25-Year Projection</h4>
+                        <div class="chart-container">
+                            <canvas id="chart25Year"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="selectedRenovations" class="renovation-list hidden">
                     <h4 style="font-weight: 600; margin-bottom: 1rem; color: #1f2937;">Selected Renovations</h4>
                     <div id="renovationListItems"></div>
@@ -1190,6 +1275,40 @@
         'landscaping': 10
     };
 
+    // Base renovation costs and value adds (used for calculation)
+    const baseRenovationData = {
+        'kitchen': { cost: 25000, valueAdd: 20000 },
+        'bathroom': { cost: 15000, valueAdd: 12000 },
+        'bedroom': { cost: 50000, valueAdd: 45000 },
+        'extrabathroom': { cost: 25000, valueAdd: 20000 },
+        'deck': { cost: 15000, valueAdd: 12000 },
+        'heatpump': { cost: 4000, valueAdd: 3000 },
+        'insulation': { cost: 5000, valueAdd: 4000 },
+        'solarsystem': { cost: 12000, valueAdd: 15000 },
+        'paintinterior': { cost: 5000, valueAdd: 4000 },
+        'paintexterior': { cost: 8000, valueAdd: 6000 },
+        'flooring': { cost: 8000, valueAdd: 6000 },
+        'landscaping': { cost: 10000, valueAdd: 8000 }
+    };
+
+    // Function to adjust renovation costs/values based on suburb
+    function getSuburbAdjustedRenovation(renovation, region, suburb) {
+        const base = baseRenovationData[renovation];
+        if (!base) return { cost: 0, valueAdd: 0 };
+
+        // Get suburb multiplier
+        const suburbMultiplier = suburbData[region]?.[suburb] || 1.0;
+
+        // Premium suburbs have higher costs and value adds
+        // Use 80% of the suburb multiplier for renovation adjustments
+        const renovationMultiplier = 0.5 + (suburbMultiplier * 0.5);
+
+        return {
+            cost: Math.round(base.cost * renovationMultiplier),
+            valueAdd: Math.round(base.valueAdd * renovationMultiplier)
+        };
+    }
+
     // Base weekly rental rates by property type (Auckland baseline)
     const baseWeeklyRent = {
         'house': 650,
@@ -1332,9 +1451,23 @@
 
     // Event Listeners
     function setupEventListeners() {
-        // Region change - populate suburbs
+        // Region change - populate suburbs and recalculate
         document.getElementById('region').addEventListener('change', function() {
             populateSuburbs(this.value);
+            // Clear manually changed flags to allow suburb adjustment
+            document.querySelectorAll('[data-cost], [data-value]').forEach(input => {
+                delete input.dataset.manuallyChanged;
+            });
+            calculateRenovations();
+        });
+
+        // Suburb change - recalculate with new suburb values
+        document.getElementById('suburb').addEventListener('change', function() {
+            // Clear manually changed flags to allow suburb adjustment
+            document.querySelectorAll('[data-cost], [data-value]').forEach(input => {
+                delete input.dataset.manuallyChanged;
+            });
+            calculateRenovations();
         });
 
         // Property form submission
@@ -1357,9 +1490,17 @@
             });
         });
 
-        // Renovation cost/value inputs
+        // Renovation cost/value inputs - track manual changes
         document.querySelectorAll('[data-cost], [data-value]').forEach(input => {
-            input.addEventListener('input', calculateRenovations);
+            input.addEventListener('input', function() {
+                this.dataset.manuallyChanged = 'true';
+                calculateRenovations();
+            });
+        });
+
+        // Calculate investment button
+        document.getElementById('calculateInvestment').addEventListener('click', function() {
+            calculateInvestmentReturns();
         });
 
         // Save property button
@@ -1574,6 +1715,10 @@
 
     // Renovation Calculations
     function calculateRenovations() {
+        // Get region and suburb for suburb-adjusted calculations
+        const region = document.getElementById('region')?.value || 'auckland';
+        const suburb = document.getElementById('suburb')?.value || 'sandringham';
+
         let totalCost = 0;
         let totalValue = 0;
         let totalRentalIncrease = 0;
@@ -1581,8 +1726,24 @@
 
         document.querySelectorAll('.renovation-checkbox:checked').forEach(checkbox => {
             const renovation = checkbox.dataset.renovation;
-            const cost = parseFloat(document.querySelector(`[data-cost="${renovation}"]`).value) || 0;
-            const value = parseFloat(document.querySelector(`[data-value="${renovation}"]`).value) || 0;
+
+            // Get suburb-adjusted values
+            const adjusted = getSuburbAdjustedRenovation(renovation, region, suburb);
+
+            // Allow user override or use adjusted values
+            const costInput = document.querySelector(`[data-cost="${renovation}"]`);
+            const valueInput = document.querySelector(`[data-value="${renovation}"]`);
+
+            // Update inputs with suburb-adjusted values if they haven't been manually changed
+            if (costInput && !costInput.dataset.manuallyChanged) {
+                costInput.value = adjusted.cost;
+            }
+            if (valueInput && !valueInput.dataset.manuallyChanged) {
+                valueInput.value = adjusted.valueAdd;
+            }
+
+            const cost = parseFloat(costInput?.value) || 0;
+            const value = parseFloat(valueInput?.value) || 0;
             const rentalIncrease = renovationRentalAdjustments[renovation] || 0;
 
             totalCost += cost;
@@ -1843,6 +2004,192 @@
             document.getElementById('quoteForm').reset();
             document.getElementById('quoteSuccess').classList.remove('hidden');
         });
+    }
+
+    // Investment Analysis Calculations
+    let chart10Year, chart25Year; // Store chart instances
+
+    function calculateInvestmentReturns() {
+        const totalBorrowing = parseFloat(document.getElementById('totalBorrowing').value) || 0;
+        const interestRate = parseFloat(document.getElementById('interestRate').value) / 100 || 0.068;
+
+        // Get renovation data
+        const totalCost = parseFloat(document.getElementById('totalRenovationCost').textContent.replace(/[$,]/g, '')) || 0;
+        const totalValueAdd = parseFloat(document.getElementById('totalValueAdd').textContent.replace(/[$,]/g, '')) || 0;
+        const annualRentalIncrease = parseFloat(document.getElementById('annualRentalIncrease').textContent.replace(/[$,]/g, '').replace('/year', '')) || 0;
+
+        if (totalCost === 0) {
+            alert('Please select renovations first');
+            return;
+        }
+
+        // Calculate monthly payment (interest-only for simplicity, or could do P&I)
+        const monthlyInterestPayment = (totalBorrowing * interestRate) / 12;
+        const annualInterestPayment = monthlyInterestPayment * 12;
+
+        // Calculate year-by-year projections
+        const projection10Year = [];
+        const projection25Year = [];
+
+        let cumulativeRentalIncome = 0;
+        let cumulativeInterestPaid = 0;
+        let cumulativeNetProfit = 0;
+
+        // Assume property value appreciation of 3% per year
+        const propertyAppreciationRate = 0.03;
+        let propertyValueGain = 0;
+
+        let breakEvenYear = null;
+
+        for (let year = 1; year <= 25; year++) {
+            // Annual rental income increases with inflation (2% per year)
+            const yearlyRentalIncome = annualRentalIncrease * Math.pow(1.02, year - 1);
+            cumulativeRentalIncome += yearlyRentalIncome;
+
+            // Interest paid (assuming interest-only loan)
+            cumulativeInterestPaid += annualInterestPayment;
+
+            // Property value appreciation on the value add
+            propertyValueGain = totalValueAdd * Math.pow(1 + propertyAppreciationRate, year);
+
+            // Net profit = rental income + property value gain - interest paid - initial cost
+            cumulativeNetProfit = cumulativeRentalIncome + propertyValueGain - cumulativeInterestPaid - totalCost;
+
+            const yearData = {
+                year: year,
+                rentalIncome: cumulativeRentalIncome,
+                interestPaid: cumulativeInterestPaid,
+                propertyValueGain: propertyValueGain,
+                netProfit: cumulativeNetProfit
+            };
+
+            if (year <= 10) {
+                projection10Year.push(yearData);
+            }
+            projection25Year.push(yearData);
+
+            // Check for break-even
+            if (breakEvenYear === null && cumulativeNetProfit >= 0) {
+                breakEvenYear = year;
+            }
+        }
+
+        // Calculate 10-year ROI
+        const netProfit10 = projection10Year[9].netProfit;
+        const roi10Year = totalCost > 0 ? (netProfit10 / totalCost) * 100 : 0;
+
+        // Display results
+        document.getElementById('roi10Year').textContent = roi10Year.toFixed(1) + '%';
+        document.getElementById('breakEvenYears').textContent = breakEvenYear ? `${breakEvenYear} years` : 'Never';
+        document.getElementById('totalInterestPaid').textContent = formatCurrency(cumulativeInterestPaid);
+        document.getElementById('netProfit10Year').textContent = formatCurrency(netProfit10);
+        document.getElementById('netProfit10Year').style.color = netProfit10 >= 0 ? '#10b981' : '#ef4444';
+
+        // Render charts
+        renderInvestmentChart('chart10Year', projection10Year, chart10Year);
+        renderInvestmentChart('chart25Year', projection25Year, chart25Year);
+
+        document.getElementById('investmentResults').classList.remove('hidden');
+    }
+
+    function renderInvestmentChart(canvasId, projectionData, chartInstance) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        // Destroy existing chart if it exists
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        const years = projectionData.map(d => `Year ${d.year}`);
+        const rentalIncome = projectionData.map(d => d.rentalIncome);
+        const interestPaid = projectionData.map(d => -d.interestPaid); // Negative for costs
+        const netProfit = projectionData.map(d => d.netProfit);
+
+        const newChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: 'Cumulative Rental Income',
+                        data: rentalIncome,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Cumulative Interest Paid',
+                        data: interestPaid,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Net Profit',
+                        data: netProfit,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: `${projectionData.length}-Year Financial Projection`,
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += formatCurrency(Math.abs(context.parsed.y));
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // Store chart instance
+        if (canvasId === 'chart10Year') {
+            chart10Year = newChart;
+        } else {
+            chart25Year = newChart;
+        }
     }
 
     // Utility Functions
