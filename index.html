@@ -505,6 +505,13 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Suburb</label>
+                    <select id="suburb" class="form-select" required>
+                        <option value="">Select Region First</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Property Type</label>
                     <select id="propertyType" class="form-select" required>
                         <option value="">Select Type</option>
@@ -524,13 +531,6 @@
                         <option value="leasehold">Leasehold</option>
                         <option value="unit-title">Unit Title</option>
                         <option value="company-share">Company Share</option>
-                    </select>
-                </div>
-
-                <div class="form-group full-width">
-                    <label class="form-label">Suburb</label>
-                    <select id="suburb" class="form-select" required>
-                        <option value="">Select Region First</option>
                     </select>
                 </div>
 
@@ -628,6 +628,34 @@
                         <div class="result-label">Value Range</div>
                         <div class="result-value" id="valueRange" style="font-size: 1.25rem;">$0 - $0</div>
                         <div class="result-subtext">±10% variation</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.5rem; font-weight: 600; margin: 2rem 0 1.5rem; color: #1f2937;">Rental Income Estimate</h3>
+
+                <div class="results-grid">
+                    <div class="result-box">
+                        <div class="result-label">Weekly Rent</div>
+                        <div class="result-value" id="weeklyRent" style="color: #10b981;">$0</div>
+                        <div class="result-subtext">Per week</div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Monthly Rent</div>
+                        <div class="result-value" id="monthlyRent" style="color: #10b981;">$0</div>
+                        <div class="result-subtext">Per month</div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Annual Rent</div>
+                        <div class="result-value" id="annualRent" style="color: #10b981;">$0</div>
+                        <div class="result-subtext">Per year</div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Rental Yield</div>
+                        <div class="result-value" id="rentalYield" style="color: #10b981;">0%</div>
+                        <div class="result-subtext">Annual return</div>
                     </div>
                 </div>
 
@@ -768,6 +796,23 @@
                     </div>
                 </div>
 
+                <!-- Solar System -->
+                <div class="renovation-item">
+                    <div class="renovation-header">
+                        <label class="renovation-name">
+                            <input type="checkbox" class="renovation-checkbox" data-renovation="solarsystem">
+                            Solar System Installation
+                        </label>
+                    </div>
+                    <div class="renovation-cost">
+                        Cost: $8,000 - $15,000 | Value Add: $10,000 - $18,000
+                    </div>
+                    <div class="renovation-details hidden" data-details="solarsystem">
+                        <input type="number" placeholder="Est. Cost ($)" data-cost="solarsystem" value="12000">
+                        <input type="number" placeholder="Value Add ($)" data-value="solarsystem" value="15000">
+                    </div>
+                </div>
+
                 <!-- Paint Interior -->
                 <div class="renovation-item">
                     <div class="renovation-header">
@@ -863,6 +908,22 @@
                         <div class="result-label">ROI</div>
                         <div class="result-value" id="roi">0%</div>
                         <div class="result-subtext">Return on investment</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.5rem; font-weight: 600; margin: 2rem 0 1.5rem; color: #1f2937;">Rental Impact</h3>
+
+                <div class="results-grid">
+                    <div class="result-box">
+                        <div class="result-label">Weekly Rental Increase</div>
+                        <div class="result-value" id="totalRentalIncrease" style="color: #10b981;">+$0/week</div>
+                        <div class="result-subtext">Additional weekly income</div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Annual Rental Increase</div>
+                        <div class="result-value" id="annualRentalIncrease" style="color: #10b981;">$0/year</div>
+                        <div class="result-subtext">Additional annual income</div>
                     </div>
                 </div>
 
@@ -1099,6 +1160,58 @@
         'aircon': 8000,
         'alarm': 3000,
         'deck': 10000
+    };
+
+    // Weekly rental adjustments for features (in dollars per week)
+    const featureRentalAdjustments = {
+        'garage': 20,
+        'carport': 10,
+        'solar': 15,  // Reduced power bills appeal to tenants
+        'heatpump': 25,
+        'pool': 30,
+        'aircon': 15,
+        'alarm': 5,
+        'deck': 15
+    };
+
+    // Renovation weekly rental adjustments (in dollars per week)
+    const renovationRentalAdjustments = {
+        'kitchen': 40,
+        'bathroom': 30,
+        'bedroom': 50,  // Extra bedroom significantly increases rental
+        'extrabathroom': 35,
+        'deck': 15,
+        'heatpump': 25,
+        'insulation': 20,
+        'solarsystem': 15,
+        'paintinterior': 10,
+        'paintexterior': 5,
+        'flooring': 15,
+        'landscaping': 10
+    };
+
+    // Base weekly rental rates by property type (Auckland baseline)
+    const baseWeeklyRent = {
+        'house': 650,
+        'townhouse': 550,
+        'apartment': 500,
+        'lifestyle': 750
+    };
+
+    // Rental yield multipliers by region (compared to Auckland)
+    const rentalRegionMultipliers = {
+        'auckland': 1.0,
+        'wellington': 1.05,
+        'christchurch': 0.75,
+        'hamilton': 0.70,
+        'tauranga': 0.80,
+        'dunedin': 0.65,
+        'palmerston-north': 0.60,
+        'napier-hastings': 0.65,
+        'nelson': 0.75,
+        'rotorua': 0.60,
+        'queenstown': 1.30,
+        'other': 0.65
     };
 
     // Property type base values (Auckland house as baseline)
@@ -1364,20 +1477,96 @@
         const lowerRange = Math.round(estimatedValue * 0.9 / 1000) * 1000;
         const upperRange = Math.round(estimatedValue * 1.1 / 1000) * 1000;
 
+        // Calculate rental income
+        const rentalEstimate = calculateRentalIncome(
+            region, suburb, propertyType, bedrooms, bathrooms, selectedFeatures, condition
+        );
+
         // Store current property data
         currentPropertyData = {
             region, suburb, propertyType, ownershipType, bedrooms, bathrooms, floorArea, landSize,
-            propertyAge, condition, features: selectedFeatures, estimatedValue, lowerRange, upperRange
+            propertyAge, condition, features: selectedFeatures, estimatedValue, lowerRange, upperRange,
+            weeklyRent: rentalEstimate.weeklyRent,
+            monthlyRent: rentalEstimate.monthlyRent,
+            annualRent: rentalEstimate.annualRent
         };
 
         // Display results
-        displayPropertyResults(estimatedValue, lowerRange, upperRange);
+        displayPropertyResults(estimatedValue, lowerRange, upperRange, rentalEstimate);
     }
 
-    function displayPropertyResults(estimatedValue, lowerRange, upperRange) {
+    // Rental Income Calculation
+    function calculateRentalIncome(region, suburb, propertyType, bedrooms, bathrooms, features, condition) {
+        // Start with base rent for property type
+        let weeklyRent = baseWeeklyRent[propertyType] || 500;
+
+        // Apply region multiplier
+        weeklyRent *= rentalRegionMultipliers[region] || 1.0;
+
+        // Apply suburb multiplier (use 70% of the property value suburb multiplier for rental)
+        const suburbMultiplier = suburbData[region]?.[suburb] || 1.0;
+        const rentalSuburbMultiplier = 1 + ((suburbMultiplier - 1) * 0.7);
+        weeklyRent *= rentalSuburbMultiplier;
+
+        // Adjust for bedrooms
+        if (bedrooms > 3) {
+            weeklyRent += (bedrooms - 3) * 50;
+        } else if (bedrooms < 3) {
+            weeklyRent -= (3 - bedrooms) * 40;
+        }
+
+        // Adjust for bathrooms
+        if (bathrooms > 2) {
+            weeklyRent += (bathrooms - 2) * 30;
+        } else if (bathrooms < 2) {
+            weeklyRent -= (2 - bathrooms) * 25;
+        }
+
+        // Adjust for condition
+        const conditionRentalMultipliers = {
+            'excellent': 1.15,
+            'good': 1.0,
+            'average': 0.90,
+            'poor': 0.75
+        };
+        weeklyRent *= conditionRentalMultipliers[condition] || 1.0;
+
+        // Add feature adjustments
+        features.forEach(feature => {
+            if (featureRentalAdjustments[feature]) {
+                weeklyRent += featureRentalAdjustments[feature];
+            }
+        });
+
+        // Round to nearest $5
+        weeklyRent = Math.round(weeklyRent / 5) * 5;
+
+        // Calculate monthly and annual rent
+        const monthlyRent = Math.round((weeklyRent * 52) / 12);
+        const annualRent = weeklyRent * 52;
+
+        return {
+            weeklyRent,
+            monthlyRent,
+            annualRent
+        };
+    }
+
+    function displayPropertyResults(estimatedValue, lowerRange, upperRange, rentalEstimate) {
         document.getElementById('estimatedValue').textContent = formatCurrency(estimatedValue);
         document.getElementById('valueRange').textContent =
             `${formatCurrency(lowerRange)} - ${formatCurrency(upperRange)}`;
+
+        // Display rental estimates if available
+        if (rentalEstimate) {
+            document.getElementById('weeklyRent').textContent = formatCurrency(rentalEstimate.weeklyRent);
+            document.getElementById('monthlyRent').textContent = formatCurrency(rentalEstimate.monthlyRent);
+            document.getElementById('annualRent').textContent = formatCurrency(rentalEstimate.annualRent);
+
+            // Calculate rental yield
+            const rentalYield = ((rentalEstimate.annualRent / estimatedValue) * 100).toFixed(2);
+            document.getElementById('rentalYield').textContent = rentalYield + '%';
+        }
 
         document.getElementById('propertyResults').classList.remove('hidden');
         document.getElementById('propertyResults').classList.add('fade-in');
@@ -1387,18 +1576,21 @@
     function calculateRenovations() {
         let totalCost = 0;
         let totalValue = 0;
+        let totalRentalIncrease = 0;
         const selectedRenovations = [];
 
         document.querySelectorAll('.renovation-checkbox:checked').forEach(checkbox => {
             const renovation = checkbox.dataset.renovation;
             const cost = parseFloat(document.querySelector(`[data-cost="${renovation}"]`).value) || 0;
             const value = parseFloat(document.querySelector(`[data-value="${renovation}"]`).value) || 0;
+            const rentalIncrease = renovationRentalAdjustments[renovation] || 0;
 
             totalCost += cost;
             totalValue += value;
+            totalRentalIncrease += rentalIncrease;
 
             const name = checkbox.parentElement.textContent.trim();
-            selectedRenovations.push({ name, cost, value });
+            selectedRenovations.push({ name, cost, value, rentalIncrease });
         });
 
         currentRenovationData = selectedRenovations;
@@ -1413,13 +1605,18 @@
         document.getElementById('roi').textContent = roi.toFixed(1) + '%';
         document.getElementById('roi').style.color = roi >= 0 ? '#10b981' : '#ef4444';
 
+        // Display rental increase
+        document.getElementById('totalRentalIncrease').textContent = '+' + formatCurrency(totalRentalIncrease) + '/week';
+        const annualRentalIncrease = totalRentalIncrease * 52;
+        document.getElementById('annualRentalIncrease').textContent = formatCurrency(annualRentalIncrease) + '/year';
+
         // Display selected renovations
         if (selectedRenovations.length > 0) {
             document.getElementById('selectedRenovations').classList.remove('hidden');
             const listHTML = selectedRenovations.map(r => `
                 <div class="renovation-list-item">
                     <span class="renovation-list-name">${r.name}</span>
-                    <span class="renovation-list-value">Cost: ${formatCurrency(r.cost)} | Value: ${formatCurrency(r.value)}</span>
+                    <span class="renovation-list-value">Cost: ${formatCurrency(r.cost)} | Value: ${formatCurrency(r.value)} | Rent: +$${r.rentalIncrease}/week</span>
                 </div>
             `).join('');
             document.getElementById('renovationListItems').innerHTML = listHTML;
@@ -1548,10 +1745,19 @@
             }
 
             currentPropertyData = project.propertyData;
+
+            // Create rental estimate object from saved data if available
+            const rentalEstimate = project.propertyData.weeklyRent ? {
+                weeklyRent: project.propertyData.weeklyRent,
+                monthlyRent: project.propertyData.monthlyRent,
+                annualRent: project.propertyData.annualRent
+            } : null;
+
             displayPropertyResults(
                 project.propertyData.estimatedValue,
                 project.propertyData.lowerRange,
-                project.propertyData.upperRange
+                project.propertyData.upperRange,
+                rentalEstimate
             );
         }
 
